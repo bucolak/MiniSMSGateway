@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "MiniSMSGateway.AppHost/MiniSMSGateway.AppHost.csproj"
+  }
+}
