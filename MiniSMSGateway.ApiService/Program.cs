@@ -1,6 +1,8 @@
+using Maradit;
 using Microsoft.EntityFrameworkCore;
 using MiniSMSGateway.ApiService.Data;
 using MiniSMSGateway.ApiService.Providers;
+using MiniSMSGateway.ApiService.Providers.Maradit;
 using MiniSMSGateway.ApiService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +18,32 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
-builder.Services.AddScoped<ISmsProvider, FakeSmsProvider>();
+
+builder.Services.AddSingleton<Messenger>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var username = config["Maradit:Username"]
+        ?? throw new InvalidOperationException("Maradit:Username is not found in the config!");
+    var password = config["Maradit:Password"]
+        ?? throw new InvalidOperationException("Maradit:Password is not found in the config!");
+    return new Messenger(username, password);
+});
+builder.Services.AddScoped<ISmsProvider, MaraditSdkProvider>();
+/*if (builder.Configuration["Maradit:ProviderType"] == "Http")
+    builder.Services.AddScoped<ISmsProvider, MaraditHttpProvider>();
+else
+{
+    builder.Services.AddSingleton<Messenger>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var username = config["Maradit:Username"]
+            ?? throw new InvalidOperationException("Maradit:Username is not found in the config!");
+        var password = config["Maradit:Password"]
+            ?? throw new InvalidOperationException("Maradit:Password is not found in the config!");
+        return new Messenger(username, password);
+    });
+    builder.Services.AddScoped<ISmsProvider, MaraditSdkProvider>();
+}*/
 
 builder.Services.AddDbContext<SmsDbContext>(options =>
 {
@@ -55,31 +82,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
-
-app.MapGet("/", () => "API service is running. Navigate to /weatherforecast to see sample data.");
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
 app.MapDefaultEndpoints();
 
 app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

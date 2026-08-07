@@ -34,7 +34,7 @@ namespace MiniSMSGateway.ApiService.Services
             await _context.SaveChangesAsync();
 
             bool status = await _provider.SendAsync(message.PhoneNumber, message.Content);
-
+            Console.WriteLine("Status kontrol: "+status);
             if(status)
             {
                 message.Status = Enums.MessageStatus.Sent;

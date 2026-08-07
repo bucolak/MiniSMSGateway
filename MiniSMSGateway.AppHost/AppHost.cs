@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgres = builder.AddPostgres("postgres").WithDataVolume();
+var postgres = builder.AddPostgres("postgres").WithDataVolume("minismsgateway");
 
 var database = postgres.AddDatabase("SmsDb");
 
