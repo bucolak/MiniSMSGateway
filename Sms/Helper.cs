@@ -4,21 +4,9 @@ namespace Sms
 {
     public class Helper
     {
-        public static async Task<(bool isSuccess, string responseBody)> SendRequestAsync(IHttpClientFactory httpClientFactory)
+        public static async Task<(bool isSuccess, string responseBody)> SendRequestAsync(IHttpClientFactory httpClientFactory, BaseSmsRquest request)
         {
             var client = httpClientFactory.CreateClient();
-
-            var request = new BaseSmsRquest
-            {
-                Credential = new SmsCredential
-                {
-                    Password = "C8aykU*GX8",
-                    Username = "balaban-bulktest"
-                },
-                Header = new SmsHeader { },
-                Message = "10-Buket Last Demo",
-                To = "905307869075"
-            };
 
             var jsonOptions = new System.Text.Json.JsonSerializerOptions
             {

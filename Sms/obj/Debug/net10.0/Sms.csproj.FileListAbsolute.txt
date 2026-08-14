@@ -118,10 +118,11 @@ C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets.development.json
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets.build.endpoints.json
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\swae.build.ex.cache
-C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.csproj.Up2Date
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.dll
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\refint\Sms.dll
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.pdb
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.genruntimeconfig.cache
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\ref\Sms.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\libman.json
+C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
