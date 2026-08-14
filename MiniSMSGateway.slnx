@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="MiniSMSGateway.ApiService/MiniSMSGateway.ApiService.csproj" />
-  <Project Path="MiniSMSGateway.AppHost/MiniSMSGateway.AppHost.csproj" />
-  <Project Path="MiniSMSGateway.ServiceDefaults/MiniSMSGateway.ServiceDefaults.csproj" />
-  <Project Path="MiniSMSGateway.Web/MiniSMSGateway.Web.csproj" />
-</Solution>

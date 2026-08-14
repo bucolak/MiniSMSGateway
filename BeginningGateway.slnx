@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BeginningGateway.AppHost/BeginningGateway.AppHost.csproj" />
+  <Project Path="BeginningGateway.ServiceDefaults/BeginningGateway.ServiceDefaults.csproj" />
+  <Project Path="Sms/Sms.csproj" />
+</Solution>
