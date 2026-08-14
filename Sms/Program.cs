@@ -86,8 +86,8 @@ app.MapGet("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCont
     {
         Credential = new SmsCredential
         {
-            Password = "C8aykU*GX8",
-            Username = "balaban-bulktest"
+            Password = "*********",
+            Username = "*********"
         },
         Header = new SmsHeader { },
         Message = message,
