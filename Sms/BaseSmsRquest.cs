@@ -19,6 +19,6 @@ namespace Sms
         public SmsCredential Credential { get; set; }
         public SmsHeader Header { get; set; }
         public string Message { get; set; } = string.Empty;
-        public string To { get; set; }
+        public List<string> To { get; set; }
     }
 }

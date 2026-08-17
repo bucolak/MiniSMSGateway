@@ -25,7 +25,7 @@
     "ContainingType": "Program\u002B\u003C\u003Ec",
     "Method": "\u003C\u003CMain\u003E$\u003Eb__0_4",
     "RelativePath": "api/sms/send",
-    "HttpMethod": "GET",
+    "HttpMethod": "POST",
     "IsController": false,
     "Order": 0,
     "Parameters": [
@@ -35,13 +35,35 @@
         "IsRequired": false
       },
       {
-        "Name": "to",
-        "Type": "System.String",
+        "Name": "request",
+        "Type": "SendSmsRequest",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "Program\u002B\u003C\u003Ec",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_5",
+    "RelativePath": "api/sms/send-bulk",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Api-Key",
+        "Type": "System.String",
+        "IsRequired": false
       },
       {
-        "Name": "message",
-        "Type": "System.String",
+        "Name": "request",
+        "Type": "SendSmsBulkRequest",
         "IsRequired": true
       }
     ],
@@ -79,13 +101,13 @@
     "ContainingType": "Program\u002B\u003C\u003Ec",
     "Method": "\u003C\u003CMain\u003E$\u003Eb__0_0",
     "RelativePath": "api/user",
-    "HttpMethod": "GET",
+    "HttpMethod": "POST",
     "IsController": false,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "name",
-        "Type": "System.String",
+        "Name": "request",
+        "Type": "CreateUserRequest",
         "IsRequired": true
       }
     ],
