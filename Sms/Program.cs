@@ -21,6 +21,8 @@ builder.Services.AddControllers();
 
 builder.Services.AddHttpClient();
 
+builder.Services.AddHostedService<SmsDispatcherService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -69,21 +71,7 @@ app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCon
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if(user is null)
-    {
         return Results.Unauthorized();
-    }
-
-    var myRequest = new BaseSmsRquest
-    {
-        Credential = new SmsCredential
-        {
-            Password = "*********",
-            Username = "*********"
-        },
-        Header = new SmsHeader { },
-        Message = request.message,
-        To = request.to
-    };
 
     var messageFields = request.to.Select( n => new Message
     {
@@ -94,27 +82,27 @@ app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCon
         Status = Sms.Enum.MessageStatus.Pending
     }).ToList();
 
+    //var (isSuccess, responseBody) = await Helper.SendRequestAsync(httpClientFactory, myRequest);
+
+    //if (!isSuccess)
+    //{
+    //    foreach(var req in messageFields)
+    //        req.Status = Sms.Enum.MessageStatus.Failed;
+    //    await dbContext.SaveChangesAsync();
+    //    return Results.Problem($"Error: {responseBody}!");
+    //}
+    //foreach (var req in messageFields)
+    //{
+    //    req.Status = Sms.Enum.MessageStatus.Sent;
+    //    req.SentAt = DateTime.UtcNow;
+    //}
+
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
-    
-    var (isSuccess, responseBody) = await Helper.SendRequestAsync(httpClientFactory, myRequest);
-
-    if (!isSuccess)
-    {
-        foreach(var req in messageFields)
-            req.Status = Sms.Enum.MessageStatus.Failed;
-        await dbContext.SaveChangesAsync();
-        return Results.Problem($"Error: {responseBody}!");
-    }
-    foreach (var req in messageFields)
-    {
-        req.Status = Sms.Enum.MessageStatus.Sent;
-        req.SentAt = DateTime.UtcNow;
-    }
-       
-    await dbContext.SaveChangesAsync();
-    return Results.Ok($"Okay!: {responseBody}");
+    var mId = messageFields.Select(m => m.Id);
+    return Results.Accepted(value: mId);
+    //return Results.Ok($"Okay!: {responseBody}");
 });
 
 app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbContext dbContext, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
@@ -123,23 +111,23 @@ app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbConte
     if (user is null)
         Results.Unauthorized();
 
-    var envelopes = new List<SmsEnvelopes>();
+    //var envelopes = new List<SmsEnvelopes>();
 
     if (request.Envelopes is null || request.Envelopes.Count == 0)
         return Results.BadRequest("There is no Sms!");
 
-    var myRequest = new BaseSmsBulkRequest
-    {
-        Credential = new SmsCredential
-        {
-            Password = "*********",
-            Username = "*********"
-        },
-        Header = new SmsHeader { },
-        Envelopes = request.Envelopes
-    };
+    //var myRequest = new BaseSmsBulkRequest
+    //{
+    //    Credential = new SmsCredential
+    //    {
+    //        Password = "C8aykU*GX8",
+    //        Username = "balaban-bulktest"
+    //    },
+    //    Header = new SmsHeader { },
+    //    Envelopes = request.Envelopes
+    //};
 
-    var messageFields = envelopes.Select(env => new Message
+    var messageFields = request.Envelopes.Select(env => new Message
     {
         UserId = user.Id,
         User = user,
@@ -151,25 +139,27 @@ app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbConte
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
-    var (isSuccess, responseBody) = await Helper.SendBulkRequestAsync(httpClient, myRequest);
+    //var (isSuccess, responseBody) = await Helper.SendBulkRequestAsync(httpClient, myRequest);
 
-    if (!isSuccess)
-    {
-        foreach (var msg in messageFields)
-        {
-            msg.Status = Sms.Enum.MessageStatus.Failed;
-        }
-        await dbContext.SaveChangesAsync();
-        return Results.Problem("SMS sending process has failed");
-    }
+    //if (!isSuccess)
+    //{
+    //    foreach (var msg in messageFields)
+    //    {
+    //        msg.Status = Sms.Enum.MessageStatus.Failed;
+    //    }
+    //    await dbContext.SaveChangesAsync();
+    //    return Results.Problem("SMS sending process has failed");
+    //}
 
-    foreach (var msg in messageFields)
-    {
-        msg.Status = Sms.Enum.MessageStatus.Sent;
-        msg.SentAt = DateTime.UtcNow;
-    }
-    await dbContext.SaveChangesAsync();
-    return Results.Ok($"Okay!: {responseBody}");
+    //foreach (var msg in messageFields)
+    //{
+    //    msg.Status = Sms.Enum.MessageStatus.Sent;
+    //    msg.SentAt = DateTime.UtcNow;
+    //}
+    //await dbContext.SaveChangesAsync();
+    //return Results.Ok($"Okay!: {responseBody}");
+    var mId = messageFields.Select(m => m.Id);
+    return Results.Accepted(value: mId);
 });
 
 app.MapControllers();
