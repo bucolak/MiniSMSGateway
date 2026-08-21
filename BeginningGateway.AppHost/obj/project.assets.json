@@ -3998,11 +3998,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
+      "projectUniqueName": "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
       "projectName": "BeginningGateway.AppHost",
-      "projectPath": "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
+      "projectPath": "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
       "packagesPath": "C:\\Users\\W10\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost\\obj\\",
+      "outputPath": "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway.AppHost\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

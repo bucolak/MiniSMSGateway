@@ -2,12 +2,18 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.VisualBasic;
+using Polly;
+using RabbitMQ.Client;
 using Sms;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
+using System.Xml.Linq;
 
 var builder = WebApplication.CreateBuilder();
 
@@ -19,9 +25,30 @@ builder.AddNpgsqlDbContext<MyDbContext>("my-db");
 
 builder.Services.AddControllers();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("SmsProvider").AddResilienceHandler("sms-circuit-breaker", builder =>
+{
+    builder.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+    {
+        SamplingDuration = TimeSpan.FromSeconds(30),
+        MinimumThroughput = 3,
+        FailureRatio = 0.5,
+        BreakDuration = TimeSpan.FromSeconds(15),
+    });
+});
 
 builder.Services.AddHostedService<SmsDispatcherService>();
+
+var factory = new ConnectionFactory 
+{ 
+    HostName = "localhost", 
+    //AutomaticRecoveryEnabled = true,
+    //TopologyRecoveryEnabled = true
+};
+await using var connection = await factory.CreateConnectionAsync();
+
+builder.Services.AddSingleton(connection);
+
+//builder.Services.AddSingleton<SmsQueue>();
 
 var app = builder.Build();
 
@@ -67,7 +94,7 @@ app.MapGet("/api/sms/status/{id}", async (MyDbContext dbContext,int id) =>
     return Results.Ok(message);
 });
 
-app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbContext dbContext, [FromHeader(Name="Api-Key")] string? apiKey, [FromBody]SendSmsRequest request) =>
+app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbContext dbContext, IConnection connection, [FromHeader(Name="Api-Key")] string? apiKey, [FromBody]SendSmsRequest request) =>
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if(user is null)
@@ -82,50 +109,55 @@ app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCon
         Status = Sms.Enum.MessageStatus.Pending
     }).ToList();
 
-    //var (isSuccess, responseBody) = await Helper.SendRequestAsync(httpClientFactory, myRequest);
-
-    //if (!isSuccess)
-    //{
-    //    foreach(var req in messageFields)
-    //        req.Status = Sms.Enum.MessageStatus.Failed;
-    //    await dbContext.SaveChangesAsync();
-    //    return Results.Problem($"Error: {responseBody}!");
-    //}
-    //foreach (var req in messageFields)
-    //{
-    //    req.Status = Sms.Enum.MessageStatus.Sent;
-    //    req.SentAt = DateTime.UtcNow;
-    //}
-
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
+    //var factory = new ConnectionFactory { HostName = "localhost" };
+    //await using var connection = await factory.CreateConnectionAsync();
+    await using var channel = await connection.CreateChannelAsync();
+
+    var arguments = new Dictionary<string, object?>
+    {
+        { "x-dead-letter-exchange", builder.Configuration.GetSection("RabbitMQ")["DeadLetterExchange"] }
+    };
+
+    await channel.QueueDeclareAsync(
+        queue: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: arguments
+    );
+
+    var properties = new BasicProperties
+    {
+        DeliveryMode = DeliveryModes.Persistent
+    };
+
+    foreach (var m in messageFields)
+    {
+        var body = Encoding.UTF8.GetBytes(m.Id.ToString());
+        await channel.BasicPublishAsync(
+            exchange: string.Empty,
+            routingKey: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
+            mandatory: false,
+            basicProperties: properties,
+            body: body
+        );
+    }
+
     var mId = messageFields.Select(m => m.Id);
     return Results.Accepted(value: mId);
-    //return Results.Ok($"Okay!: {responseBody}");
 });
 
-app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbContext dbContext, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
+app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if (user is null)
         Results.Unauthorized();
 
-    //var envelopes = new List<SmsEnvelopes>();
-
     if (request.Envelopes is null || request.Envelopes.Count == 0)
         return Results.BadRequest("There is no Sms!");
-
-    //var myRequest = new BaseSmsBulkRequest
-    //{
-    //    Credential = new SmsCredential
-    //    {
-    //        Password = "C8aykU*GX8",
-    //        Username = "balaban-bulktest"
-    //    },
-    //    Header = new SmsHeader { },
-    //    Envelopes = request.Envelopes
-    //};
 
     var messageFields = request.Envelopes.Select(env => new Message
     {
@@ -139,28 +171,54 @@ app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbConte
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
-    //var (isSuccess, responseBody) = await Helper.SendBulkRequestAsync(httpClient, myRequest);
+    //var factory = new ConnectionFactory { HostName = "localhost" };
+    //await using var connection = await factory.CreateConnectionAsync();
+    await using var channel = await connection.CreateChannelAsync();
 
-    //if (!isSuccess)
-    //{
-    //    foreach (var msg in messageFields)
-    //    {
-    //        msg.Status = Sms.Enum.MessageStatus.Failed;
-    //    }
-    //    await dbContext.SaveChangesAsync();
-    //    return Results.Problem("SMS sending process has failed");
-    //}
+    var arguments = new Dictionary<string, object?>
+    {
+        { "x-dead-letter-exchange", builder.Configuration.GetSection("RabbitMQ")["DeadLetterExchange"] }
+    };
 
-    //foreach (var msg in messageFields)
-    //{
-    //    msg.Status = Sms.Enum.MessageStatus.Sent;
-    //    msg.SentAt = DateTime.UtcNow;
-    //}
-    //await dbContext.SaveChangesAsync();
-    //return Results.Ok($"Okay!: {responseBody}");
+    await channel.QueueDeclareAsync(
+        queue: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
+        durable: true,
+        exclusive: false,
+        autoDelete: false,
+        arguments: arguments
+    );
+
+    var properties = new BasicProperties
+    {
+        DeliveryMode = DeliveryModes.Persistent
+    };
+
+    foreach (var m in messageFields)
+    {
+        var body = Encoding.UTF8.GetBytes(m.Id.ToString());
+        await channel.BasicPublishAsync(
+            exchange: string.Empty,
+            routingKey: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
+            mandatory: false,
+            basicProperties: properties,
+            body: body
+        );
+    }
+
     var mId = messageFields.Select(m => m.Id);
     return Results.Accepted(value: mId);
 });
+
+app.MapPost("api/sms/replay-failed", async (IConfiguration configuration, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
+    if (user is null)
+        return Results.Unauthorized();
+
+    var a = await Helper.ReplayFailedMessagesAsync(connection, configuration, dbContext);
+    return Results.Ok(a);
+});
+
 
 app.MapControllers();
 app.Run();

@@ -16,11 +16,13 @@ using System.Reflection;
     "p.exe")]
 [assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\W10\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.4.6\\tools\\ex" +
     "t\\")]
-[assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost")]
+[assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway" +
+    ".AppHost")]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectname", "BeginningGateway.AppHost.csproj")]
 [assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\W10\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\13.4.6\\tools\\Aspire.Das" +
     "hboard.exe")]
-[assembly: System.Reflection.AssemblyMetadataAttribute("apphostprojectbaseintermediateoutputpath", "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost\\obj\\")]
+[assembly: System.Reflection.AssemblyMetadataAttribute("apphostprojectbaseintermediateoutputpath", "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway" +
+    ".AppHost\\obj\\")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("BeginningGateway.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]

@@ -7,6 +7,7 @@
         public User? User { get; set; }
         public string PhoneNumber { get; set; }
         public string Content { get; set; }
+        public int RetryCount { get; set; } = 0;
         public Enum.MessageStatus Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? SentAt { get; set; }

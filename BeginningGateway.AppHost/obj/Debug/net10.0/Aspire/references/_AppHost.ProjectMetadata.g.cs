@@ -17,5 +17,5 @@ public class BeginningGateway_AppHost
     /// <summary>
     /// The path to the Aspire Host project.
     /// </summary>
-    public static string ProjectPath => """C:\Users\W10\source\repos\BeginningGateway\BeginningGateway.AppHost""";
+    public static string ProjectPath => """C:\Users\W10\Desktop\BeginningGatewayAddedQueue\BeginningGateway\BeginningGateway.AppHost""";
 }

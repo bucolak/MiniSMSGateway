@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "OHIkPWSjD9g=",
+  "dgSpecHash": "xL6JcedeXjE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.ServiceDefaults\\BeginningGateway.ServiceDefaults.csproj",
+  "projectFilePath": "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway.ServiceDefaults\\BeginningGateway.ServiceDefaults.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\W10\\.nuget\\packages\\microsoft.extensions.ambientmetadata.application\\10.6.0\\microsoft.extensions.ambientmetadata.application.10.6.0.nupkg.sha512",
     "C:\\Users\\W10\\.nuget\\packages\\microsoft.extensions.compliance.abstractions\\10.6.0\\microsoft.extensions.compliance.abstractions.10.6.0.nupkg.sha512",

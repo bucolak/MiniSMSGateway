@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "9et23AMUolg=",
+  "dgSpecHash": "VTcF0JEJ7Nk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\W10\\source\\repos\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
+  "projectFilePath": "C:\\Users\\W10\\Desktop\\BeginningGatewayAddedQueue\\BeginningGateway\\BeginningGateway.AppHost\\BeginningGateway.AppHost.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\W10\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\13.4.6\\aspire.dashboard.sdk.win-x64.13.4.6.nupkg.sha512",
     "C:\\Users\\W10\\.nuget\\packages\\aspire.hosting\\13.4.6\\aspire.hosting.13.4.6.nupkg.sha512",

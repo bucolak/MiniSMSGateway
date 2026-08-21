@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Sms
 {
-    internal class MyDbContext : DbContext
+    public class MyDbContext : DbContext
     {
         public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         { }

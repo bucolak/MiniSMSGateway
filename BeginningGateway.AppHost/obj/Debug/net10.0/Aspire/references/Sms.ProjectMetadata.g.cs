@@ -15,7 +15,7 @@ public class Sms : global::Aspire.Hosting.IProjectMetadata
     /// <summary>
     /// The path to the Sms project.
     /// </summary>
-    public string ProjectPath => """C:\Users\W10\source\repos\BeginningGateway\Sms\Sms.csproj""";
+    public string ProjectPath => """C:\Users\W10\Desktop\BeginningGatewayAddedQueue\BeginningGateway\Sms\Sms.csproj""";
 
     /// <summary>
     /// Gets a value indicating whether building the project before running it should be suppressed.

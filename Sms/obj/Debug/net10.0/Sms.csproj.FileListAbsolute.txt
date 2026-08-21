@@ -125,4 +125,17 @@ C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.pdb
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\Sms.genruntimeconfig.cache
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\ref\Sms.dll
 C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\libman.json
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\RabbitMQ.Client.dll
 C:\Users\W10\source\repos\BeginningGateway\Sms\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.AmbientMetadata.Application.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Compliance.Abstractions.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.AutoActivation.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Http.Diagnostics.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Http.Resilience.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Resilience.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Telemetry.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Microsoft.Extensions.Telemetry.Abstractions.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Polly.Core.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Polly.Extensions.dll
+C:\Users\W10\source\repos\BeginningGateway\Sms\bin\Debug\net10.0\Polly.RateLimiting.dll
