@@ -9,5 +9,11 @@
             Sent,
             Failed
         }
+
+        public enum ProviderType
+        {
+            Maradit,
+            Turkcell
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿//Console.WriteLine("Hello, World!");
 
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
@@ -38,6 +39,27 @@ builder.Services.AddHttpClient("SmsProvider").AddResilienceHandler("sms-circuit-
 
 builder.Services.AddHostedService<SmsDispatcherService>();
 
+var mtConfig = builder.Configuration.GetSection("MassTransitRabbitMQ");
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<SmsConsumer>();
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        cfg.ReceiveEndpoint(mtConfig["QueueName"], e =>
+        {
+            e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(15)));
+            e.ConfigureConsumer<SmsConsumer>(context);
+        });
+    });
+});
+
 var factory = new ConnectionFactory 
 { 
     HostName = "localhost", 
@@ -47,8 +69,6 @@ var factory = new ConnectionFactory
 await using var connection = await factory.CreateConnectionAsync();
 
 builder.Services.AddSingleton(connection);
-
-//builder.Services.AddSingleton<SmsQueue>();
 
 var app = builder.Build();
 
@@ -94,7 +114,7 @@ app.MapGet("/api/sms/status/{id}", async (MyDbContext dbContext,int id) =>
     return Results.Ok(message);
 });
 
-app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbContext dbContext, IConnection connection, [FromHeader(Name="Api-Key")] string? apiKey, [FromBody]SendSmsRequest request) =>
+app.MapPost("api/sms/raw/send", async (IHttpClientFactory httpClientFactory, MyDbContext dbContext, IConnection connection, [FromHeader(Name="Api-Key")] string? apiKey, [FromBody]SendSmsRequest request) =>
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if(user is null)
@@ -106,28 +126,14 @@ app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCon
         User = user,
         PhoneNumber = n,
         Content = request.message,
-        Status = Sms.Enum.MessageStatus.Pending
+        Status = Sms.Enum.MessageStatus.Pending,
+        ProviderType = request.ProviderType
     }).ToList();
 
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
-    //var factory = new ConnectionFactory { HostName = "localhost" };
-    //await using var connection = await factory.CreateConnectionAsync();
     await using var channel = await connection.CreateChannelAsync();
-
-    var arguments = new Dictionary<string, object?>
-    {
-        { "x-dead-letter-exchange", builder.Configuration.GetSection("RabbitMQ")["DeadLetterExchange"] }
-    };
-
-    await channel.QueueDeclareAsync(
-        queue: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
-        durable: true,
-        exclusive: false,
-        autoDelete: false,
-        arguments: arguments
-    );
 
     var properties = new BasicProperties
     {
@@ -150,7 +156,7 @@ app.MapPost("api/sms/send", async (IHttpClientFactory httpClientFactory, MyDbCon
     return Results.Accepted(value: mId);
 });
 
-app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
+app.MapPost("api/sms/raw/send-bulk", async (IHttpClientFactory httpClient, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if (user is null)
@@ -165,28 +171,14 @@ app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbConte
         User = user,
         PhoneNumber = env.To,
         Content = env.Message,
-        Status = Sms.Enum.MessageStatus.Pending
+        Status = Sms.Enum.MessageStatus.Pending,
+        ProviderType = request.ProviderType
     }).ToList();
 
     dbContext.Messages.AddRange(messageFields);
     await dbContext.SaveChangesAsync();
 
-    //var factory = new ConnectionFactory { HostName = "localhost" };
-    //await using var connection = await factory.CreateConnectionAsync();
     await using var channel = await connection.CreateChannelAsync();
-
-    var arguments = new Dictionary<string, object?>
-    {
-        { "x-dead-letter-exchange", builder.Configuration.GetSection("RabbitMQ")["DeadLetterExchange"] }
-    };
-
-    await channel.QueueDeclareAsync(
-        queue: builder.Configuration.GetSection("RabbitMQ")["QueueName"],
-        durable: true,
-        exclusive: false,
-        autoDelete: false,
-        arguments: arguments
-    );
 
     var properties = new BasicProperties
     {
@@ -209,7 +201,37 @@ app.MapPost("api/sms/send-bulk", async (IHttpClientFactory httpClient, MyDbConte
     return Results.Accepted(value: mId);
 });
 
-app.MapPost("api/sms/replay-failed", async (IConfiguration configuration, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey) =>
+app.MapPost("api/sms/masstransit/send-bulk", async (IPublishEndpoint publishEndpoint, MyDbContext dbContext, [FromHeader(Name = "Api-Key")] string? apiKey, [FromBody] SendSmsBulkRequest request) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
+    if (user is null)
+        return Results.Unauthorized();
+    if (request.Envelopes is null || request.Envelopes.Count == 0)
+        return Results.BadRequest("There is no Sms!");
+
+    var messageFields = request.Envelopes.Select(env => new Message
+    {
+        UserId = user.Id,
+        User = user,
+        PhoneNumber = env.To,
+        Content = env.Message,
+        Status = Sms.Enum.MessageStatus.Pending,
+        ProviderType = request.ProviderType
+    }).ToList();
+
+    dbContext.Messages.AddRange(messageFields);
+    await dbContext.SaveChangesAsync();
+
+    foreach (var m in messageFields)
+    {
+        await publishEndpoint.Publish(new SendSmsMassitTransit(m.Id));
+    }
+
+    var mId = messageFields.Select(m => m.Id);
+    return Results.Accepted(value: mId);
+});
+
+app.MapPost("api/sms/raw/failed/replay", async (IConfiguration configuration, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey) =>
 {
     var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     if (user is null)
@@ -217,12 +239,26 @@ app.MapPost("api/sms/replay-failed", async (IConfiguration configuration, MyDbCo
 
     var a = await Helper.ReplayFailedMessagesAsync(connection, configuration, dbContext);
     return Results.Ok(a);
-});
+});  
 
+app.MapPost("api/sms/masstransit/failed/replay", async (IConfiguration configuration, MyDbContext dbContext, IConnection connection, [FromHeader(Name = "Api-Key")] string? apiKey) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ApiKey == apiKey);
+    if (user is null)
+        return Results.Unauthorized();
+
+    var a = await Helper.ReplayFailedMassTransitMessagesAsync(connection, configuration, dbContext);
+    return Results.Ok(a);
+});
 
 app.MapControllers();
 app.Run();
 
-public record CreateUserRequest(string name);
-public record SendSmsRequest([property: JsonConverter(typeof(SingleOrListStringConverter))] List<string> to, string message);
-public record SendSmsBulkRequest(List<SmsEnvelopes> Envelopes);
+
+namespace Sms
+{
+    public record CreateUserRequest(string name); 
+    public record SendSmsRequest([property: JsonConverter(typeof(SingleOrListStringConverter))] List<string> to, string message, Sms.Enum.ProviderType ProviderType);
+    public record SendSmsBulkRequest(List<SmsEnvelopes> Envelopes, Sms.Enum.ProviderType ProviderType);
+    public record SendSmsMassitTransit(int MessageId);
+}

@@ -11,5 +11,6 @@
         public Enum.MessageStatus Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? SentAt { get; set; }
+        public Enum.ProviderType ProviderType { get; set; }
     }
 }

@@ -41,6 +41,9 @@ namespace Sms.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("ProviderType")
+                        .HasColumnType("integer");
+
                     b.Property<int>("RetryCount")
                         .HasColumnType("integer");
 

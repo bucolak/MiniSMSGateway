@@ -24,8 +24,6 @@ namespace Sms
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //var factory = new ConnectionFactory { HostName = "localhost" };
-            //var connection = await factory.CreateConnectionAsync();
             var channel = await _connection.CreateChannelAsync();
 
             var consumer = new AsyncEventingBasicConsumer(channel);
@@ -105,10 +103,12 @@ namespace Sms
                         return;
                     }
 
-                    _logger.LogInformation("[{Time}] >>> Mesaj İşleniyor (ID: {Id}, Mevcut Retry: {Count})",
-    DateTime.Now.ToString("HH:mm:ss.fff"),
-    messageID,
-    sms?.RetryCount ?? 0);
+                    _logger.LogInformation(
+                        "[{Time}] >>> Mesaj İşleniyor (ID: {Id}, Mevcut Retry: {Count})",
+                        DateTime.Now.ToString("HH:mm:ss.fff"),
+                        messageID,
+                        sms?.RetryCount ?? 0
+                    );
 
                     var bulkRequests = new BaseSmsBulkRequest
                     {
@@ -122,17 +122,21 @@ namespace Sms
                     };
                     try
                     {
-                        var (isSuccess, responseBody) = await Helper.SendBulkRequestAsync(_httpClientFactory, bulkRequests);
-                        if (!isSuccess)
+                        if(sms.ProviderType == Enum.ProviderType.Maradit)
                         {
-                            sms.Status = Sms.Enum.MessageStatus.Failed;
-                            _logger.LogWarning("SMS gönderilemedi (id={Id}, numara={Phone}): {Body}", sms.Id, sms.PhoneNumber, responseBody);
 
-                        }
-                        else
-                        {
-                            sms.Status = Sms.Enum.MessageStatus.Sent;
-                            sms.SentAt = DateTime.UtcNow;
+                            var (isSuccess, responseBody) = await Provider.Maradit.SendBulkRequestAsync(_httpClientFactory, bulkRequests);
+                            if (!isSuccess)
+                            {
+                                sms.Status = Sms.Enum.MessageStatus.Failed;
+                                _logger.LogWarning("SMS gönderilemedi (id={Id}, numara={Phone}): {Body}", sms.Id, sms.PhoneNumber, responseBody);
+
+                            }
+                            else
+                            {
+                                sms.Status = Sms.Enum.MessageStatus.Sent;
+                                sms.SentAt = DateTime.UtcNow;
+                            }
                         }
                     }
                     catch (Exception e)
@@ -142,6 +146,9 @@ namespace Sms
                         willre_add = true;
                         sms.RetryCount++;
                     }
+
+                    await dbContext.SaveChangesAsync(stoppingToken);
+
                     if (willre_add)
                     {
                         if (sms.RetryCount >= 3)
@@ -151,7 +158,6 @@ namespace Sms
                         }
                         else
                         {
-                            //await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, true);
                             var properties = new BasicProperties
                             {
                                 DeliveryMode = DeliveryModes.Persistent
@@ -168,7 +174,7 @@ namespace Sms
                     }
                     else
                         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                    await dbContext.SaveChangesAsync(stoppingToken);
+                    
                 }
             };
 
@@ -180,63 +186,6 @@ namespace Sms
                 consumer: consumer
             );
             await Task.Delay(Timeout.Infinite, stoppingToken);
-        }
-
-        private async Task ProcessPendingAsync(CancellationToken ct)
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<MyDbContext>();
-
-            var pending = await dbContext.Messages
-                        .Where(s => s.Status == Sms.Enum.MessageStatus.Pending)
-                        .OrderBy(i => i.Id)
-                        .Take(20)
-                        .ToListAsync(ct);
-
-            if (pending.Count < 1)
-                return;
-
-            foreach (var p in pending)
-                p.Status = Sms.Enum.MessageStatus.Processing;
-            await dbContext.SaveChangesAsync(ct);
-            var envelopes = pending.Select(p => new SmsEnvelopes
-            {
-                To = p.PhoneNumber,
-                Message = p.Content
-            }).ToList();
-            var bulkRequests = new BaseSmsBulkRequest
-            {
-                Credential = new SmsCredential
-                {
-                    Password = _configuration.GetSection("SmsProvider")["Password"],
-                    Username = _configuration.GetSection("SmsProvider")["Username"]
-                },
-                Header = new SmsHeader { },
-                Envelopes = envelopes
-            };
-            foreach (var p in pending)
-            {
-                var (isSuccess, responseBody) = await Helper.SendBulkRequestAsync(_httpClientFactory, bulkRequests);
-                try
-                {   
-                    if (!isSuccess)
-                    {
-                        p.Status = Sms.Enum.MessageStatus.Failed;
-                        _logger.LogWarning("SMS gönderilemedi (id={Id}, numara={Phone}): {Body}", p.Id, p.PhoneNumber, responseBody);
-                    }
-                    else
-                    {
-                        p.Status = Sms.Enum.MessageStatus.Sent;
-                        p.SentAt = DateTime.UtcNow;
-                    }
-                }
-                catch(Exception e)
-                {
-                    p.Status = Sms.Enum.MessageStatus.Failed;
-                    _logger.LogError(e, "SMS gönderim sırasında hata (id={Id})", p.Id);
-                }
-            }
-            await dbContext.SaveChangesAsync(ct);
         }
     }
 }
