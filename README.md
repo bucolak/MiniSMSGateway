@@ -1,4 +1,4 @@
-# Mini SMS Gateway
+# Mini SMS Gateway 
 
 A small SMS gateway API built with **.NET 10**, **PostgreSQL** and **RabbitMQ**. Clients send SMS requests with an API key; messages are stored, queued and delivered asynchronously to an external SMS provider, with retries, a dead-letter queue and a circuit breaker to protect against provider outages.
 
