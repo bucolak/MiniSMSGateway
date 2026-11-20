@@ -208,8 +208,8 @@ namespace Sms
             {
                 Credential = new SmsCredential
                 {
-                    Password = "C8aykU*GX8",
-                    Username = "balaban-bulktest"
+                    Password = _configuration.GetSection("SmsProvider")["Password"],
+                    Username = _configuration.GetSection("SmsProvider")["Username"]
                 },
                 Header = new SmsHeader { },
                 Envelopes = envelopes
